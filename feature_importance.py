@@ -1,4 +1,5 @@
 # import libraries
+# requires scikit-learn and xgboost
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
@@ -56,61 +57,64 @@ test = pd.get_dummies(test, columns=CATEGORICAL_FEATURES)
 print ("Starting...")
 features = train.columns
 
-if (ALG_DEFAULT == "forest"):
-    # create the random forest classifier and fit it to the training set
-    classifier = RandomForestClassifier(
-        n_estimators=100,
-        criterion="gini",
-        max_depth=None,
-        min_samples_leaf=1,
-        min_weight_fraction_leaf=0.,
-        max_features="auto",
-        max_leaf_nodes=None,
-        min_impurity_decrease=0.,
-        bootstrap=True,
-        oob_score=False,
-        verbose=4,
-        n_jobs=2)
-elif (ALG_DEFAULT == "xgb"):
-    classifier = XGBClassifier()
-elif (ALG_DEFAULT == "extra"):
-    classifier = ExtraTreeClassifier(
-        criterion="gini", 
-        splitter="random", 
-        max_depth=None, 
-        min_samples_split=2, 
-        min_samples_leaf=1, 
-        min_weight_fraction_leaf=0.0, 
-        max_features="auto", 
-        random_state=None, 
-        max_leaf_nodes=None, 
-        min_impurity_decrease=0.0, 
-        min_impurity_split=None, 
-        class_weight=None)
-elif (ALG_DEFAULT == "adaboost"):
-    classifier = AdaBoostClassifier(
-        n_estimators=100
-    )
-elif (ALG_DEFAULT == "gradientboost"):
-    classifier = GradientBoostingClassifier(
-        n_estimators=100, 
-        learning_rate=1.0,
-        max_depth=1, 
-        random_state=0)
-else:
-    classifier = ""
-classifier.fit(train[features], y)
+for ALG_DEFAULT in ALGS:
+    if (ALG_DEFAULT == "forest"):
+        # create the random forest classifier and fit it to the training set
+        classifier = RandomForestClassifier(
+            n_estimators=100,
+            criterion="gini",
+            max_depth=None,
+            min_samples_leaf=1,
+            min_weight_fraction_leaf=0.,
+            max_features="auto",
+            max_leaf_nodes=None,
+            min_impurity_decrease=0.,
+            bootstrap=True,
+            oob_score=False,
+            verbose=4,
+            n_jobs=2)
+    elif (ALG_DEFAULT == "xgb"):
+        classifier = XGBClassifier()
+    elif (ALG_DEFAULT == "extra"):
+        classifier = ExtraTreeClassifier(
+            criterion="gini", 
+            splitter="random", 
+            max_depth=None, 
+            min_samples_split=2, 
+            min_samples_leaf=1, 
+            min_weight_fraction_leaf=0.0, 
+            max_features="auto", 
+            random_state=None, 
+            max_leaf_nodes=None, 
+            min_impurity_decrease=0.0, 
+            min_impurity_split=None, 
+            class_weight=None)
+    elif (ALG_DEFAULT == "adaboost"):
+        classifier = AdaBoostClassifier(
+            n_estimators=100
+        )
+    elif (ALG_DEFAULT == "gradientboost"):
+        classifier = GradientBoostingClassifier(
+            n_estimators=100, 
+            learning_rate=1.0,
+            max_depth=1, 
+            random_state=0)
+    else:
+        classifier = ""
+    print (ALG_DEFAULT) # print the currently used classifier
+    
+    # fit our classifier to our train dataset
+    classifier.fit(train[features], y)
 
-# make predictions ovet the test dataset and evaluate
-print ("Trained")
-preds = classifier.predict(test[features])
-pd.crosstab(test['target'], preds, rownames=['actual'], colnames=['preds'])
+    # make predictions ovet the test dataset and evaluate
+    preds = classifier.predict(test[features])
+    pd.crosstab(test['target'], preds, rownames=['actual'], colnames=['preds'])
 
-# display the relevance of each feature in a sorted way (from most relevant to not relevant)
-result = list(zip(train[features], classifier.feature_importances_))
-result = sorted(result, key=lambda result: result[1], reverse=True)
-i = 0
-for important_column in result:
-    if (i<10):
-        print(important_column)
-        i = i + 1
+    # display the relevance of each feature in a sorted way (from most relevant to not relevant)
+    result = list(zip(train[features], classifier.feature_importances_))
+    result = sorted(result, key=lambda result: result[1], reverse=True)
+    i = 0
+    for important_column in result:
+        if (i<10):
+            print(important_column)
+            i = i + 1
