@@ -1,11 +1,15 @@
 # import libraries
-# requires scikit-learn and xgboost
+# requires scikit-learn, pydotplus and xgboost
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.tree import ExtraTreeClassifier
+import xgboost
 from xgboost import XGBClassifier
-
+from xgboost import plot_tree
+from sklearn.externals.six import StringIO  
+from sklearn.tree import export_graphviz
+import pydotplus
 import os
 import pandas as pd
 import numpy as np
@@ -13,10 +17,10 @@ import sys, getopt
 
 
 
-
-ALGS = ["forest", "extra", "adaboost", "gradientboost", "xgb"]
+ALGS = ["xgb"]
+#ALGS = ["forest", "extra", "adaboost", "gradientboost", "xgb"]
 ALG_DEFAULT = "xgb"
-PATH_DATASET=r".\dataset"
+PATH_DATASET=r"./dataset"
 FILE_TRAIN = PATH_DATASET + os.sep + "train.csv"
 FILE_TEST = PATH_DATASET + os.sep + "test.csv"  
 
@@ -27,8 +31,8 @@ CSV_COLUMN_NAMES = []
 
 # read train and test csv files into a pandas dataframe, return features and labels
 # and create automatically the FIELD_DEFAULTS  to be used to decode csv
-train = pd.read_csv(FILE_TRAIN, sep=";", header=0)
-test = pd.read_csv(FILE_TEST, sep=";", header=0)
+train = pd.read_csv(FILE_TRAIN, sep=";", header=0).fillna(0)
+test = pd.read_csv(FILE_TEST, sep=";", header=0).fillna(0)
 y = train.pop("target")
 
 # fill NaN in train sets and categorize columns datatype
@@ -103,8 +107,8 @@ for ALG_DEFAULT in ALGS:
             max_depth=1, 
             random_state=0)
     else:
-        classifier = ""
-    print (ALG_DEFAULT) # print the currently used classifier
+        break
+    print ("Fitting: "+ ALG_DEFAULT) # print the currently used classifier
     
     # fit our classifier to our train dataset
     classifier.fit(train[features], y)
@@ -121,3 +125,15 @@ for ALG_DEFAULT in ALGS:
         if (i<10):
             print(important_column)
             i = i + 1
+
+plot_tree(classifier, num_trees=2)
+plt.show()
+"""
+xgboost.to_graphviz(classifier, num_trees=2)
+
+dot_data = StringIO()
+export_graphviz(classifier, out_file=dot_data,  
+                filled=True, rounded=True,
+                special_characters=True)
+graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+"""
